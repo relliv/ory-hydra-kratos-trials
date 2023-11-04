@@ -6,7 +6,7 @@ In this project contains **Ory Hydra**, **Postgres** (as a database) and **Jaege
 
 Also Hydra is providing admin endpoints, see postman examples.
 
-Hydra is not providing user management system, use Ory Kratos for that.
+Hydra is not providing user management system. Like login, register, verification etc. use Ory Kratos for that.
 
 ## Refs
 
