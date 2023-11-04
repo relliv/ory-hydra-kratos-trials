@@ -6,6 +6,8 @@ In this project contains **Ory Hydra**, **Postgres** (as a database) and **Jaege
 
 Also Hydra is providing admin endpoints, see postman examples.
 
+Hydra is not providing user management system, use Ory Kratos for that.
+
 ## Refs
 
 - Official example [docker-compose.yml](https://github.com/ory/hydra/blob/master/quickstart.yml) file
