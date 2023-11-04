@@ -1,6 +1,6 @@
 # Ory Hydra/Kratos Example Projects
 
-This repository contains experimental projects. Do not use these configs and .env files on production.
+This repository contains experimental projects. Do not use these configs and .env files on production. I personally prefer [Postgresql](https://www.postgresql.org/) as RDBMS database. You will see all examples with Postgresql.
 
 ## Before the start
 
