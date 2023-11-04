@@ -1,0 +1,88 @@
+version: "3.8"
+
+services:
+  # Ory Hydra Server
+  ory_hydra_trials2:
+    image: oryd/hydra:v2.2.0
+    container_name: ory_hydra_trials2
+    restart: on-failure
+    networks:
+      - ory_hydra_trials2_network
+    ports:
+      - "4444:4444" # Public port
+      - "4445:4445" # Admin port
+      - "5555:5555" # Port for hydra token user, testing purpose only
+    command: serve all --dev --sqa-opt-out
+    environment:
+      # https://www.ory.sh/hydra/docs/reference/configuration
+      # https://github.com/ory/hydra/blob/aeecfe1c8f/test/e2e/docker-compose.yml
+      - SECRETS_SYSTEM=this-is-the-primary-secret
+      - URLS_LOGIN=http://localhost:8000/authentication/login # Sets the login endpoint of the User Login & Consent flow.
+      - URLS_CONSENT=http://localhost:8000/authentication/consent # Sets the consent endpoint of the User Login & Consent flow.
+      # set to Hydra public domain
+      - URLS_SELF_PUBLIC=http://localhost:4444 # to public endpoint
+      - URLS_SELF_ISSUER=http://localhost:4444 # to public endpoint
+      - DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@ory_hydra_trials2_postgresd:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable&max_conns=20&max_idle_conns=4
+      - SERVE_PUBLIC_PORT=4444
+      - SERVE_PUBLIC_HOST=0.0.0.0
+      - SERVE_PUBLIC_CORS_ENABLED=true
+      - SERVE_ADMIN_PORT=4445
+      - URLS_SELF_ISSUER_INSECURE=true
+      - LOG_LEVEL=debug
+      - TRACING_PROVIDER=jaeger
+      - TRACING_PROVIDERS_JAEGER_SAMPLING_SERVER_URL=http://ory_hydra_trials2_jaeger:5778/sampling
+      - TRACING_PROVIDERS_JAEGER_LOCAL_AGENT_ADDRESS=jaeger:6831
+      - TRACING_PROVIDERS_JAEGER_SAMPLING_TYPE=const
+      - TRACING_PROVIDERS_JAEGER_SAMPLING_VALUE=1
+    depends_on:
+      - ory_hydra_trials2_postgresd
+      - ory_hydra_trials2_jaeger
+
+  # Ory Hydra Migrator
+  ory_hydra_trials2_migrate:
+    image: oryd/hydra:v2.2.0
+    container_name: ory_hydra_trials2_migrate
+    restart: on-failure
+    networks:
+      - ory_hydra_trials2_network
+    command: migrate sql -e --yes
+    environment:
+      - DSN=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@ory_hydra_trials2_postgresd:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable&max_conns=20&max_idle_conns=4
+    depends_on:
+      - ory_hydra_trials2_postgresd
+
+  # Ory Hydra Database
+  ory_hydra_trials2_postgresd:
+    image: postgres:15
+    container_name: ory_hydra_trials2_postgresd
+    restart: on-failure
+    networks:
+      - ory_hydra_trials2_network
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # jaegertracing for Ory Server
+  ory_hydra_trials2_jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: ory_hydra_trials2_jaeger
+    restart: on-failure
+    networks:
+      - ory_hydra_trials2_network
+    ports:
+      - 5775:5775/udp
+      - 6831:6831/udp
+      - 6832:6832/udp
+      - 16686:16686 # Web App GUI to see traces
+
+networks:
+  ory_hydra_trials2_network:
+    name: ory-hydra-net
+
+volumes:
+  pgdata:
